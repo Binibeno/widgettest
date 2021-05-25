@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:advance_pdf_viewer/advance_pdf_viewer.dart';
 
 void main() {
   runApp(MyApp());
@@ -22,8 +23,9 @@ class MyApp extends StatelessWidget {
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
         primarySwatch: Colors.blue,
+        platform: TargetPlatform.iOS,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: SafeArea(child: MyHomePage(title: 'Flutter Demo Home Page')),
     );
   }
 }
@@ -98,6 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     Widget iosScroll(oldalSzam, jelenlegiOldal) {
+      var lastSelected = jelenlegiOldal;
       return CupertinoPicker.builder(
         backgroundColor: Colors.white,
         itemExtent: 30,
@@ -106,11 +109,14 @@ class _MyHomePageState extends State<MyHomePage> {
         itemBuilder: (context, index) {
           return Text((index + 1).toString());
         },
-        onSelectedItemChanged: (value) {},
+        onSelectedItemChanged: (value) {
+          lastSelected = value + 1;
+          print(value + 1);
+        },
       );
     }
 
-    int iosAlert(oldalSzam, jelenlegiOldal) {
+    iosAlert(oldalSzam, jelenlegiOldal) {
       /*showCupertinoDialog(
         barrierDismissible: false,
         context: context,
@@ -134,23 +140,31 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       );*/
+      Widget sizer(Widget input) {
+        return Container(
+          //from stackoverflow 216
+          // looks godd from me 250
+          height: 216,
+          padding: const EdgeInsets.only(top: 6.0), // from stack overflow
+          child: input,
+        );
+      }
 
+//!finaé
       showCupertinoModalPopup(
-        builder: (context) => SizedBox(
-          child: iosScroll(oldalSzam, jelenlegiOldal),
-          height: 250,
-        ),
+        builder: (context) => sizer(iosScroll(oldalSzam, jelenlegiOldal)),
         context: context,
       );
 
-      // showCupertinoModalPopup(
-      //   builder: (context) => CupertinoDatePicker(
+      //howCupertinoModalPopup(
+      // builder: (context) => sizer(
+      //   CupertinoDatePicker(
       //     backgroundColor: Colors.white,
-
-      //     onDateTimeChanged: (DateTime) {},
+      //     onDateTimeChanged: (dateTime) {},
       //   ),
-      //   context: context,
-      // );
+      // ),
+      // context: context,
+      //;
     }
 
     return Scaffold(
@@ -158,7 +172,31 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add_circle_outline),
+            tooltip: 'Display ios style alert',
+            onPressed: () {
+              showCupertinoDialog(
+                  context: context,
+                  builder: (_) => CupertinoAlertDialog(
+                        title: Text("Test pop-up "),
+                        content: Text("Még több fincsi szöveg"),
+                        actions: [
+                          CupertinoDialogAction(
+                            child: Text("Bezár"),
+                            isDefaultAction: true,
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          )
+                        ],
+                      ));
+            },
+          ),
+        ],
       ),
+
       body: Container(
         color: Colors.white,
         child: Center(
@@ -171,8 +209,19 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          iosAlert(15, 2);
+        onPressed: () async {
+          //iosAlert(15, 2);
+          PDFDocument document = await PDFDocument.fromURL(
+              'https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf');
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => Scaffold(
+                        appBar: AppBar(
+                          title: Text('Example'),
+                        ),
+                        body: Center(child: PDFViewer(document: document)),
+                      )));
         },
         tooltip: 'Increment',
         child: Icon(Icons.add),
